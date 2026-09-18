@@ -9,7 +9,9 @@ use tauri::{AppHandle, Manager, Runtime};
 
 use crate::{
     auth::{load_app_settings, save_app_settings},
-    types::{DockDisplayMode, TrayDisplayMode, UsageInfo},
+    types::{
+        resolve_desktop_language, DockDisplayMode, TrayDisplayMode, UiLanguagePreference, UsageInfo,
+    },
 };
 
 /// Label of the borderless tray popup window.
@@ -120,6 +122,36 @@ pub fn get_display_settings() -> Result<DisplaySettings, String> {
         ui_language_preference: settings.ui_language_preference,
         resolved_language: resolve_desktop_language(settings.ui_language_preference).to_string(),
     })
+}
+
+#[tauri::command]
+pub fn get_language() -> String {
+    load_app_settings()
+        .map(|settings| resolve_desktop_language(settings.ui_language_preference).to_string())
+        .unwrap_or_else(|_| "en-US".to_string())
+}
+
+#[tauri::command]
+pub fn set_language(app: AppHandle, language: String) -> Result<(), String> {
+    let preference = match language.as_str() {
+        "system" => UiLanguagePreference::System,
+        "en-US" => UiLanguagePreference::English,
+        "zh-CN" => UiLanguagePreference::SimplifiedChinese,
+        _ => return Err(format!("Unsupported language preference: {language}")),
+    };
+
+    let mut settings = load_app_settings().map_err(|error| error.to_string())?;
+    settings.ui_language_preference = preference;
+    save_app_settings(&settings).map_err(|error| error.to_string())?;
+
+    #[cfg(desktop)]
+    {
+        crate::app_menu::refresh(&app).map_err(|error| error.to_string())?;
+        crate::tray::refresh(&app);
+    }
+    #[cfg(not(desktop))]
+    let _ = &app;
+    Ok(())
 }
 
 #[tauri::command]
