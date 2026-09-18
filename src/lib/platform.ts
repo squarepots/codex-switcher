@@ -1,4 +1,5 @@
 import type { ImportAccountsSummary } from "../types";
+import { translate } from "./i18n";
 
 export type FileSource = string | File;
 
@@ -49,7 +50,7 @@ export async function pickAuthJsonFile(): Promise<FileSource | null> {
     const selected = await open({
       multiple: false,
       filters: [{ name: "JSON", extensions: ["json"] }],
-      title: "Select auth.json file",
+      title: translate("platform.dialog.select_auth_json"),
     });
 
     if (!selected || Array.isArray(selected)) return null;
@@ -63,9 +64,9 @@ export async function exportFullBackupFile(): Promise<boolean> {
   if (isTauriRuntime()) {
     const { save } = await import("@tauri-apps/plugin-dialog");
     const selected = await save({
-      title: "Export Full Encrypted Account Config",
+      title: translate("platform.dialog.export_full_title"),
       defaultPath: "codex-switcher-full.cswf",
-      filters: [{ name: "Codex Switcher Full Backup", extensions: ["cswf"] }],
+      filters: [{ name: translate("platform.dialog.full_backup_filter"), extensions: ["cswf"] }],
     });
 
     if (!selected) return false;
@@ -87,7 +88,7 @@ export async function importFullBackupFile(): Promise<ImportAccountsSummary | nu
     const { open } = await import("@tauri-apps/plugin-dialog");
     const selected = await open({
       multiple: false,
-      title: "Import Full Encrypted Account Config",
+      title: translate("platform.dialog.import_full_title"),
       filters: [{ name: "Codex Switcher Full Backup", extensions: ["cswf"] }],
     });
 
@@ -107,7 +108,7 @@ export async function importFullBackupFile(): Promise<ImportAccountsSummary | nu
 }
 
 export function describeFileSource(source: FileSource | null): string {
-  if (!source) return "No file selected";
+  if (!source) return translate("platform.no_file_selected");
   return typeof source === "string" ? source : source.name;
 }
 
