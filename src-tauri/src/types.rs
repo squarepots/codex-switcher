@@ -500,7 +500,10 @@ pub struct CreditStatusDetails {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_chatgpt_id_token_claims, AppSettings, DockDisplayMode, TrayDisplayMode};
+    use super::{
+        is_simplified_chinese_locale, parse_chatgpt_id_token_claims, AppSettings,
+        DockDisplayMode, TrayDisplayMode, UiLanguagePreference,
+    };
     use base64::Engine;
 
     #[test]
@@ -519,6 +522,35 @@ mod tests {
                 .subscription_expires_at
                 .map(|value| value.to_rfc3339()),
             Some("2026-04-23T05:03:38+00:00".to_string())
+        );
+    }
+
+    #[test]
+    fn simplified_chinese_locale_resolution_excludes_traditional_chinese() {
+        assert!(is_simplified_chinese_locale(Some("zh-CN")));
+        assert!(is_simplified_chinese_locale(Some("zh_Hans_CN")));
+        assert!(is_simplified_chinese_locale(Some("zh-SG")));
+        assert!(!is_simplified_chinese_locale(Some("zh-TW")));
+        assert!(!is_simplified_chinese_locale(Some("zh-HK")));
+        assert!(!is_simplified_chinese_locale(Some("zh-Hant")));
+        assert!(!is_simplified_chinese_locale(Some("fr-FR")));
+    }
+
+    #[test]
+    fn system_language_preference_resolves_with_english_fallback() {
+        assert_eq!(
+            UiLanguagePreference::System.resolved(Some("zh-CN")),
+            "zh-CN"
+        );
+        assert_eq!(
+            UiLanguagePreference::System.resolved(Some("zh-TW")),
+            "en-US"
+        );
+        assert_eq!(UiLanguagePreference::System.resolved(None), "en-US");
+        assert_eq!(UiLanguagePreference::English.resolved(Some("zh-CN")), "en-US");
+        assert_eq!(
+            UiLanguagePreference::SimplifiedChinese.resolved(Some("en-US")),
+            "zh-CN"
         );
     }
 
