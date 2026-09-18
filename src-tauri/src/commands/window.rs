@@ -103,7 +103,8 @@ pub fn quit_app(app: AppHandle) {
 pub struct DisplaySettings {
     tray_display_mode: TrayDisplayMode,
     dock_display_mode: Option<DockDisplayMode>,
-    language: String,
+    ui_language_preference: UiLanguagePreference,
+    resolved_language: String,
 }
 
 #[tauri::command]
@@ -116,7 +117,8 @@ pub fn get_display_settings() -> Result<DisplaySettings, String> {
         } else {
             None
         },
-        language: settings.language,
+        ui_language_preference: settings.ui_language_preference,
+        resolved_language: resolve_desktop_language(settings.ui_language_preference).to_string(),
     })
 }
 
