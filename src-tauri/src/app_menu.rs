@@ -9,7 +9,7 @@ use tauri::{
 pub(crate) use crate::types::DockDisplayMode;
 use crate::{
     auth::{load_app_settings, save_app_settings},
-    types::{AppSettings, TrayDisplayMode},
+    types::{resolve_desktop_language, AppSettings, TrayDisplayMode},
 };
 
 const TRAY_ICON_AND_SESSION_ID: &str = "tray-display-icon-and-session";
