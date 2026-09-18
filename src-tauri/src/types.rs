@@ -40,6 +40,56 @@ fn default_close_behavior_prompt_enabled() -> bool {
     true
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum UiLanguagePreference {
+    #[default]
+    #[serde(rename = "system")]
+    System,
+    #[serde(rename = "en-US", alias = "en-us")]
+    English,
+    #[serde(
+        rename = "zh-CN",
+        alias = "zh-cn",
+        alias = "zh-Hans",
+        alias = "zh-hans",
+        alias = "zh-SG",
+        alias = "zh-sg"
+    )]
+    SimplifiedChinese,
+}
+
+impl UiLanguagePreference {
+    pub fn resolved(self, system_locale: Option<&str>) -> &'static str {
+        match self {
+            Self::English => "en-US",
+            Self::SimplifiedChinese => "zh-CN",
+            Self::System => {
+                if is_simplified_chinese_locale(system_locale) {
+                    "zh-CN"
+                } else {
+                    "en-US"
+                }
+            }
+        }
+    }
+}
+
+pub fn is_simplified_chinese_locale(locale: Option<&str>) -> bool {
+    let Some(locale) = locale else {
+        return false;
+    };
+    let normalized = locale.replace('_', "-").to_ascii_lowercase();
+    normalized == "zh-cn"
+        || normalized == "zh-sg"
+        || normalized == "zh-hans"
+        || normalized.starts_with("zh-hans-")
+}
+
+pub fn resolve_desktop_language(preference: UiLanguagePreference) -> &'static str {
+    let system_locale = sys_locale::get_locale();
+    preference.resolved(system_locale.as_deref())
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct AppSettings {
@@ -47,6 +97,8 @@ pub struct AppSettings {
     pub dock_display_mode: DockDisplayMode,
     #[serde(default = "default_close_behavior_prompt_enabled")]
     pub close_behavior_prompt_enabled: bool,
+    #[serde(default, alias = "language")]
+    pub ui_language_preference: UiLanguagePreference,
 }
 
 impl Default for AppSettings {
@@ -55,6 +107,7 @@ impl Default for AppSettings {
             tray_display_mode: TrayDisplayMode::default(),
             dock_display_mode: DockDisplayMode::default(),
             close_behavior_prompt_enabled: true,
+            ui_language_preference: UiLanguagePreference::System,
         }
     }
 }
