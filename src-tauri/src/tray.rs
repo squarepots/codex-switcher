@@ -51,11 +51,8 @@ pub fn setup(app: &AppHandle) -> tauri::Result<()> {
     create_tray_window(app)?;
 
     let settings = load_app_settings().unwrap_or_default();
-    let menu = build_menu(
-        app,
-        &load_accounts().unwrap_or_default(),
-        &settings.language,
-    )?;
+    let language = crate::types::resolve_desktop_language(settings.ui_language_preference);
+    let menu = build_menu(app, &load_accounts().unwrap_or_default(), language)?;
 
     #[cfg(target_os = "linux")]
     let icon = app
@@ -240,9 +237,10 @@ fn create_tray_window<R: Runtime>(app: &AppHandle<R>) -> tauri::Result<()> {
         return Ok(());
     }
 
-    let language = load_app_settings().unwrap_or_default().language;
+    let settings = load_app_settings().unwrap_or_default();
+    let language = crate::types::resolve_desktop_language(settings.ui_language_preference);
     let window = WebviewWindowBuilder::new(app, TRAY_WINDOW, WebviewUrl::App("tray.html".into()))
-        .title(crate::app_menu::text(&language, "Codex Switcher"))
+        .title(crate::app_menu::text(language, "Codex Switcher"))
         .inner_size(TRAY_WIDTH, TRAY_HEIGHT)
         .resizable(false)
         .decorations(false)
@@ -369,20 +367,21 @@ fn build_menu<R: Runtime>(
 #[cfg(target_os = "macos")]
 fn append_dock_settings_menu<R: Runtime>(app: &AppHandle<R>, menu: &Menu<R>) -> tauri::Result<()> {
     let settings = load_app_settings().unwrap_or_default();
+    let language = crate::types::resolve_desktop_language(settings.ui_language_preference);
     let dock_settings = Submenu::with_items(
         app,
-        crate::app_menu::text(&settings.language, "Dock Icon"),
+        crate::app_menu::text(language, "Dock Icon"),
         true,
         &[
             &CheckMenuItemBuilder::with_id(
                 crate::app_menu::DOCK_SHOW_IN_DOCK_ID,
-                crate::app_menu::text(&settings.language, "Show in Dock"),
+                crate::app_menu::text(language, "Show in Dock"),
             )
             .checked(settings.dock_display_mode == crate::app_menu::DockDisplayMode::ShowInDock)
             .build(app)?,
             &CheckMenuItemBuilder::with_id(
                 crate::app_menu::DOCK_MENU_BAR_ONLY_ID,
-                crate::app_menu::text(&settings.language, "Menu Bar Only"),
+                crate::app_menu::text(language, "Menu Bar Only"),
             )
             .checked(settings.dock_display_mode == crate::app_menu::DockDisplayMode::MenuBarOnly)
             .build(app)?,
