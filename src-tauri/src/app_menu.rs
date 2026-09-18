@@ -187,7 +187,7 @@ fn apply_dock_display_mode<R: Runtime>(app: &AppHandle<R>, mode: DockDisplayMode
 }
 
 fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::Result<Menu<R>> {
-    let language = settings.language.as_str();
+    let language = resolve_desktop_language(settings.ui_language_preference);
     let pkg_info = app.package_info();
     let config = app.config();
     let about_metadata = AboutMetadata {
