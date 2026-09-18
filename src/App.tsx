@@ -1220,7 +1220,7 @@ function App() {
       );
     } catch (err) {
       console.error("Failed to import full encrypted file:", err);
-      showWarmupToast(t("Full import failed"), true);
+      showWarmupToast(t("app.full.import.failed"), true);
     } finally {
       setIsImportingFull(false);
     }
