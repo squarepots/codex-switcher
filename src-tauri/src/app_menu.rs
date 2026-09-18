@@ -187,6 +187,7 @@ fn apply_dock_display_mode<R: Runtime>(app: &AppHandle<R>, mode: DockDisplayMode
 }
 
 fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::Result<Menu<R>> {
+    let language = settings.language.as_str();
     let pkg_info = app.package_info();
     let config = app.config();
     let about_metadata = AboutMetadata {
@@ -203,13 +204,13 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::
 
     let tray_settings = Submenu::with_items(
         app,
-        "Tray",
+        text(language, "Tray"),
         true,
         &[
             &CheckMenuItem::with_id(
                 app,
                 TRAY_ICON_AND_SESSION_ID,
-                "Icon + Session",
+                text(language, "Icon + Session"),
                 true,
                 settings.tray_display_mode == TrayDisplayMode::IconAndSession,
                 None::<&str>,
@@ -217,7 +218,7 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::
             &CheckMenuItem::with_id(
                 app,
                 TRAY_ACTIVE_USAGE_TEXT_ID,
-                "Hourly + Weekly",
+                text(language, "Hourly + Weekly"),
                 true,
                 settings.tray_display_mode == TrayDisplayMode::ActiveUsageText,
                 None::<&str>,
@@ -225,7 +226,7 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::
             &CheckMenuItem::with_id(
                 app,
                 TRAY_HIDDEN_ID,
-                "Hidden",
+                text(language, "Hidden"),
                 true,
                 settings.tray_display_mode == TrayDisplayMode::Hidden,
                 None::<&str>,
@@ -236,13 +237,13 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::
     #[cfg(target_os = "macos")]
     let dock_settings = Submenu::with_items(
         app,
-        "Dock Icon",
+        text(language, "Dock Icon"),
         true,
         &[
             &CheckMenuItem::with_id(
                 app,
                 DOCK_SHOW_IN_DOCK_ID,
-                "Show in Dock",
+                text(language, "Show in Dock"),
                 true,
                 settings.dock_display_mode == DockDisplayMode::ShowInDock,
                 None::<&str>,
@@ -250,7 +251,7 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::
             &CheckMenuItem::with_id(
                 app,
                 DOCK_MENU_BAR_ONLY_ID,
-                "Menu Bar Only",
+                text(language, "Menu Bar Only"),
                 true,
                 settings.dock_display_mode == DockDisplayMode::MenuBarOnly,
                 None::<&str>,
@@ -261,7 +262,7 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::
     let desktop_reopen_settings = MenuItem::with_id(
         app,
         DESKTOP_REOPEN_SETTINGS_ID,
-        "Reopen Codex after force close...",
+        text(language, "Reopen Codex after force close..."),
         cfg!(any(target_os = "macos", windows)),
         None::<&str>,
     )?;
@@ -269,7 +270,7 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::
     #[cfg(target_os = "macos")]
     let settings_menu = Submenu::with_items(
         app,
-        "Settings",
+        text(language, "Settings"),
         true,
         &[&tray_settings, &dock_settings, &desktop_reopen_settings],
     )?;
@@ -277,14 +278,14 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::
     #[cfg(not(target_os = "macos"))]
     let settings_menu = Submenu::with_items(
         app,
-        "Settings",
+        text(language, "Settings"),
         true,
         &[&tray_settings, &desktop_reopen_settings],
     )?;
 
     let window_menu = Submenu::with_items(
         app,
-        "Window",
+        text(language, "Window"),
         true,
         &[
             &PredefinedMenuItem::minimize(app, None)?,
@@ -295,7 +296,7 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::
         ],
     )?;
 
-    let help_menu = Submenu::with_items(app, "Help", true, &[])?;
+    let help_menu = Submenu::with_items(app, text(language, "Help"), true, &[])?;
 
     Menu::with_items(
         app,
@@ -327,7 +328,7 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::
             )))]
             &Submenu::with_items(
                 app,
-                "File",
+                text(language, "File"),
                 true,
                 &[
                     &PredefinedMenuItem::close_window(app, None)?,
@@ -337,7 +338,7 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::
             )?,
             &Submenu::with_items(
                 app,
-                "Edit",
+                text(language, "Edit"),
                 true,
                 &[
                     &PredefinedMenuItem::undo(app, None)?,
@@ -352,7 +353,7 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::
             #[cfg(target_os = "macos")]
             &Submenu::with_items(
                 app,
-                "View",
+                text(language, "View"),
                 true,
                 &[&PredefinedMenuItem::fullscreen(app, None)?],
             )?,
@@ -362,6 +363,35 @@ fn build_menu<R: Runtime>(app: &AppHandle<R>, settings: &AppSettings) -> tauri::
             &help_menu,
         ],
     )
+}
+
+pub(crate) fn text(language: &str, value: &str) -> String {
+    if language.eq_ignore_ascii_case("zh-cn") {
+        match value {
+            "Tray" => "托盘",
+            "Icon + Session" => "图标 + 会话",
+            "Hourly + Weekly" => "每小时 + 每周",
+            "Hidden" => "隐藏",
+            "Dock Icon" => "Dock 图标",
+            "Show in Dock" => "在 Dock 中显示",
+            "Menu Bar Only" => "仅菜单栏",
+            "Reopen Codex after force close..." => "强制关闭后重新打开 Codex……",
+            "Settings" => "设置",
+            "Window" => "窗口",
+            "File" => "文件",
+            "Edit" => "编辑",
+            "View" => "视图",
+            "Help" => "帮助",
+            "No accounts configured" => "未配置账号",
+            "Open Codex Switcher" => "打开 Codex Switcher",
+            "Codex Switcher" => "Codex Switcher",
+            "Quit" => "退出",
+            other => other,
+        }
+        .to_string()
+    } else {
+        value.to_string()
+    }
 }
 
 #[cfg(all(test, target_os = "macos"))]
@@ -393,5 +423,17 @@ mod tests {
         assert!(ensure_dock_entry_for_tray_mode(&mut settings));
         assert_eq!(settings.tray_display_mode, TrayDisplayMode::Hidden);
         assert_eq!(settings.dock_display_mode, DockDisplayMode::ShowInDock);
+    }
+}
+
+#[cfg(test)]
+mod text_tests {
+    use super::text;
+
+    #[test]
+    fn native_menu_text_has_english_fallback_and_simplified_chinese() {
+        assert_eq!(text("en-US", "Settings"), "Settings");
+        assert_eq!(text("zh-CN", "Settings"), "设置");
+        assert_eq!(text("zh-CN", "untranslated"), "untranslated");
     }
 }
