@@ -573,7 +573,7 @@ function App() {
         setPendingSwitchAccountId(accountId);
         setForceCloseConfirmOpen(true);
       } else {
-        showWarmupToast(`Switch failed: ${formatWarmupError(err)}`, true);
+        showWarmupToast(t("Switch failed: {{error}}", { error: formatWarmupError(err) }), true);
       }
     } finally {
       setSwitchingId(null);
@@ -661,14 +661,14 @@ function App() {
     try {
       desktopReopen.savePreference(value);
     } catch (err) {
-      showWarmupToast(`Could not save preference: ${formatWarmupError(err)}`, true);
+      showWarmupToast(t("Could not save preference: {{error}}", { error: formatWarmupError(err) }), true);
     }
   };
   const saveCodexClosePreference = (value: CodexClosePreference) => {
     try {
       codexClose.savePreference(value);
     } catch (err) {
-      showWarmupToast(`Could not save close preference: ${formatWarmupError(err)}`, true);
+      showWarmupToast(t("Could not save close preference: {{error}}", { error: formatWarmupError(err) }), true);
     }
   };
 
@@ -702,7 +702,7 @@ function App() {
               showWarmupToast(t("Switched account from tray."));
             } catch (err) {
               console.error("Failed to retry tray account switch:", err);
-              showWarmupToast(`Switch failed: ${formatWarmupError(err)}`, true);
+              showWarmupToast(t("Switch failed: {{error}}", { error: formatWarmupError(err) }), true);
             } finally {
               setSwitchingId(null);
             }
@@ -754,7 +754,7 @@ function App() {
         setCloseBehaviorPromptOpen(false);
       } catch (err) {
         console.error("Failed to complete close behavior:", err);
-        showWarmupToast(`Close failed: ${formatWarmupError(err)}`, true);
+        showWarmupToast(t("Close failed: {{error}}", { error: formatWarmupError(err) }), true);
       } finally {
         setIsCompletingCloseBehavior(false);
       }
@@ -772,12 +772,12 @@ function App() {
       try {
         desktopReopen.rememberSelection();
       } catch (err) {
-        showWarmupToast(`Could not save preference: ${formatWarmupError(err)}`, true);
+        showWarmupToast(t("Could not save preference: {{error}}", { error: formatWarmupError(err) }), true);
       }
       try {
         codexClose.rememberSelection();
       } catch (err) {
-        showWarmupToast(`Could not save close preference: ${formatWarmupError(err)}`, true);
+        showWarmupToast(t("Could not save close preference: {{error}}", { error: formatWarmupError(err) }), true);
       }
       const result = await closeCodexProcesses(shouldReopen, codexClose.forceClose);
       if (!result?.processInfo?.can_switch) return;
@@ -787,23 +787,30 @@ function App() {
         accountId ? async () => {
           setSwitchingId(accountId);
           await switchAccount(accountId);
-          showWarmupToast(`Switched account after ${codexClose.forceClose ? "force closing" : "closing"} Codex.`);
+          showWarmupToast(t("Switched account after {{action}} Codex.", {
+            action: codexClose.forceClose ? t("force close") : t("close gracefully"),
+          }));
         } : null,
         async (token) => {
           try {
             await invokeBackend("reopen_closed_codex_desktop", { token });
-            showWarmupToast(accountId ? "Account switched. Codex desktop reopened." : "Codex desktop reopened.");
+            showWarmupToast(accountId ? t("Account switched. Codex desktop reopened.") : t("Codex desktop reopened."));
           } catch (err) {
-            showWarmupToast(`Codex closed${accountId ? " and account switched" : ""}, but reopening failed: ${formatWarmupError(err)}`, true);
+            showWarmupToast(
+              accountId
+                ? t("Codex closed and account switched, but reopening failed: {{error}}", { error: formatWarmupError(err) })
+                : t("Codex closed, but reopening failed: {{error}}", { error: formatWarmupError(err) }),
+              true,
+            );
           }
         },
       );
       if (shouldReopen && !result.reopenToken) {
-        showWarmupToast("No closed desktop app could be identified for reopening. Open Codex manually.", true);
+        showWarmupToast(t("No closed desktop app could be identified for reopening. Open Codex manually."), true);
       }
     } catch (err) {
       console.error("Failed to switch account after closing Codex:", err);
-      showWarmupToast(`Switch failed after closing Codex: ${formatWarmupError(err)}`, true);
+      showWarmupToast(t("Switch failed after closing Codex: {{error}}", { error: formatWarmupError(err) }), true);
     } finally {
       setPendingSwitchAccountId(null);
       setSwitchingId(null);
@@ -1170,9 +1177,11 @@ function App() {
       const summary = await importAccountsSlimText(configPayload);
       setMaskedAccounts(new Set());
       setIsConfigModalOpen(false);
-      showWarmupToast(
-        `Imported ${summary.imported_count}, skipped ${summary.skipped_count} (total ${summary.total_in_payload})`
-      );
+      showWarmupToast(t("Imported {{imported}}, skipped {{skipped}} (total {{total}})", {
+        imported: summary.imported_count,
+        skipped: summary.skipped_count,
+        total: summary.total_in_payload,
+      }));
     } catch (err) {
       console.error("Failed to import slim text:", err);
       const message = err instanceof Error ? err.message : String(err);
@@ -1227,7 +1236,7 @@ function App() {
       }, 1500);
     } catch (err) {
       console.error("Failed to open Codex app:", err);
-      showWarmupToast(`Open Codex failed: ${formatWarmupError(err)}`, true);
+      showWarmupToast(t("Open Codex failed: {{error}}", { error: formatWarmupError(err) }), true);
     } finally {
       setIsOpeningCodex(false);
     }
@@ -2218,7 +2227,7 @@ function App() {
                       setConfigCopied(true);
                       setTimeout(() => setConfigCopied(false), 1500);
                     } catch {
-                      setConfigModalError("Clipboard unavailable. Please copy manually.");
+                      setConfigModalError(t("Clipboard unavailable. Please copy manually."));
                     }
                   }}
                   disabled={!configPayload || isExportingSlim}
