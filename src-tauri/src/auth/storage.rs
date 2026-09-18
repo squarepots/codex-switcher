@@ -96,22 +96,14 @@ pub fn load_accounts() -> Result<AccountsStore> {
     Ok(store)
 }
 
-pub fn load_app_settings() -> Result<AppSettings> {
-    let path = get_settings_file()?;
-
-    if !path.exists() {
-        return Ok(AppSettings::default());
-    }
-
-    let content = fs::read_to_string(&path)
-        .with_context(|| format!("Failed to read settings file: {}", path.display()))?;
-    let raw: serde_json::Value = serde_json::from_str(&content)
-        .with_context(|| format!("Failed to parse settings file: {}", path.display()))?;
+fn parse_existing_app_settings(content: &str) -> Result<AppSettings> {
+    let raw: serde_json::Value =
+        serde_json::from_str(content).context("Failed to parse settings JSON")?;
     let had_language_preference = raw.get("ui_language_preference").is_some()
         || raw.get("language").is_some();
 
-    let mut settings: AppSettings = serde_json::from_value(raw)
-        .with_context(|| format!("Failed to parse settings file: {}", path.display()))?;
+    let mut settings: AppSettings =
+        serde_json::from_value(raw).context("Failed to decode app settings")?;
 
     // Existing installations predate localization. Keep their observable
     // English UI on upgrade instead of silently switching to the OS language.
