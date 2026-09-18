@@ -93,14 +93,18 @@ function resolveBrowserPreference(preference: BrowserLanguagePreference): Suppor
   return preference === "browser" ? resolvePreferredLanguage(browserLocales()) : preference;
 }
 
-export function translate(key: string, language: SupportedLanguage = "en-US"): string {
+function currentLanguage(): SupportedLanguage {
+  return i18n.resolvedLanguage === "zh-CN" || i18n.language === "zh-CN" ? "zh-CN" : "en-US";
+}
+
+export function translate(key: string, language: SupportedLanguage = currentLanguage()): string {
   return i18n.t(key, { lng: language, defaultValue: key });
 }
 
 export function translateMessage(
   key: string,
   variables: Record<string, string | number> = {},
-  language: SupportedLanguage = "en-US"
+  language: SupportedLanguage = currentLanguage()
 ): string {
   return i18n.t(key, { lng: language, defaultValue: key, ...variables });
 }
